@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Load credentials from environment variables
 WHATSAPP_API_URL = "https://graph.facebook.com/v22.0/634957356359676/messages"
-ACCESS_TOKEN = "EAANj8m0V4WIBOyOmgSGdcVfjwjmMYSGGFl4kIt8PxAggcrFcInxHZBOZCPYp0UkLZCRwvFMhQGE77ZCBjmbV0VZCFbm1PBE0woDie8DCU5P0pq6vUQNnfXGF1ddk2y4N6oh2S3vZBo42GPLEZCqYu3wFMvaoqSAn1865ugeQ6LuqZBZB9q3hKieVTY2qpeC5s0NRZBhF6ZCurM1hWjJI1ml7v8FYjxTdQidTv10tvgZD"
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")  # Secure access token
 
 @app.route("/")
 def home():
@@ -19,18 +19,35 @@ def send_message(user, text):
         "type": "text",
         "text": {"body": text}
     }
-    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}", "Content-Type": "application/json"}
-    requests.post(WHATSAPP_API_URL, json=data, headers=headers)
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(WHATSAPP_API_URL, json=data, headers=headers)
+    print(response.json())  # Debugging
 
-@app.route("/webhook", methods=["POST"])
+@app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    data = request.json
-    if "messages" in data:
-        for message in data["messages"]:
-            if "type" in message and message["type"] == "document":
-                doc_url = message["document"]["link"]
-                send_message(message["from"], f"Received your file! Downloading: {doc_url}")
-    return "OK", 200
+    if request.method == "GET":  # Meta verification step
+        mode = request.args.get("hub.mode")
+        verify_token = request.args.get("hub.verify_token")
+        challenge = request.args.get("hub.challenge")
+
+        if mode == "subscribe" and verify_token == os.getenv("VERIFY_TOKEN", "whatsapp_bot_verification@123"):
+            print(f"Webhook verified successfully! Challenge: {challenge}")
+            return challenge, 200  # Must return plain text response
+
+        print("Webhook verification failed!")
+        return "Verification failed", 403
+
+    elif request.method == "POST":  # Handling incoming messages
+        data = request.json
+        if "messages" in data:
+            for message in data["messages"]:
+                if "type" in message and message["type"] == "document":
+                    doc_url = message["document"]["link"]
+                    send_message(message["from"], f"Received your file! Downloading: {doc_url}")
+        return "OK", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Render requires a dynamic port
