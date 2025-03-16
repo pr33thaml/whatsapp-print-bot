@@ -41,19 +41,31 @@ def webhook():
         return "Verification failed", 403
 
     elif request.method == "POST":  # Handling incoming messages
-        data = request.json
-        print("Received Data:", data)  # Debugging
+        data = request.get_json()
+        print("🔹 Full Incoming Data:", data)  # <-- ADDED LOGGING
 
         try:
             messages = data["entry"][0]["changes"][0]["value"]["messages"]
+            print("✅ Extracted Messages:", messages)  # <-- ADDED LOGGING
+
             for message in messages:
-                if message["type"] == "document":
+                if message["type"] == "text":
+                    text = message["text"]["body"]
+                    sender = message["from"]
+                    print(f"📩 Received message from {sender}: {text}")  # <-- ADDED LOGGING
+                    send_message(sender, f"Echo: {text}")  # Send a response
+                    
+                elif message["type"] == "document":
                     doc_url = message["document"]["link"]
-                    send_message(message["from"], f"✅ Received your file! Downloading: {doc_url}")
+                    sender = message["from"]
+                    print(f"📄 Received document from {sender}: {doc_url}")  # <-- ADDED LOGGING
+                    send_message(sender, f"✅ Received your file! Downloading: {doc_url}")
+
         except KeyError:
-            print("No valid messages found")
+            print("⚠️ No valid messages found in the request")
 
         return "OK", 200
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Render requires a dynamic port
