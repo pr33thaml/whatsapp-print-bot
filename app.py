@@ -42,11 +42,17 @@ def webhook():
 
     elif request.method == "POST":  # Handling incoming messages
         data = request.json
-        if "messages" in data:
-            for message in data["messages"]:
-                if "type" in message and message["type"] == "document":
+        print("Received Data:", data)  # Debugging
+
+        try:
+            messages = data["entry"][0]["changes"][0]["value"]["messages"]
+            for message in messages:
+                if message["type"] == "document":
                     doc_url = message["document"]["link"]
-                    send_message(message["from"], f"Received your file! Downloading: {doc_url}")
+                    send_message(message["from"], f"✅ Received your file! Downloading: {doc_url}")
+        except KeyError:
+            print("No valid messages found")
+
         return "OK", 200
 
 if __name__ == "__main__":
