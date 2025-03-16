@@ -8,6 +8,10 @@ app = Flask(__name__)
 WHATSAPP_API_URL = "https://graph.facebook.com/v22.0/634957356359676/messages"
 ACCESS_TOKEN = "EAANj8m0V4WIBOyOmgSGdcVfjwjmMYSGGFl4kIt8PxAggcrFcInxHZBOZCPYp0UkLZCRwvFMhQGE77ZCBjmbV0VZCFbm1PBE0woDie8DCU5P0pq6vUQNnfXGF1ddk2y4N6oh2S3vZBo42GPLEZCqYu3wFMvaoqSAn1865ugeQ6LuqZBZB9q3hKieVTY2qpeC5s0NRZBhF6ZCurM1hWjJI1ml7v8FYjxTdQidTv10tvgZD"
 
+@app.route("/")
+def home():
+    return "✅ WhatsApp Print Bot is Live!"
+
 def send_message(user, text):
     data = {
         "messaging_product": "whatsapp",
